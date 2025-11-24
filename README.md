@@ -25,8 +25,8 @@ bash <(curl -Ls https://raw.githubusercontent.com/lchtnfld/stealth-site/main/ins
 ### Inputs Required:
 1.  **Domain:** (e.g., `node.example.com`) — *Must point to your server IP!*
 2.  **Email:** (for Let's Encrypt notifications)
-3.  **Node Name:** (e.g., `Node FRA-01`) — *Displayed on the status page.*
-4.  **Region:** (e.g., `Frankfurt, DE`) — *Displayed on the status page.*
+3.  **Node Name:** (e.g., `Node USA-01`) — *Displayed on the status page.*
+4.  **Region:** (e.g., `Chicago, US`) — *Displayed on the status page.*
 
 ---
 
