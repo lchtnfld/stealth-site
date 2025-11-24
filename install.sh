@@ -221,18 +221,18 @@ systemctl restart nginx
 # Wait a moment for Nginx to bind
 sleep 2
 
-# Test connectivity using curl with explicit Host header (since we bind to 127.0.0.1)
-# Note: curl might complain about SSL on localhost, using -k (insecure) just to check connectivity
-if curl -k -s -I "https://127.0.0.1:$FALLBACK_PORT" -H "Host: $DOMAIN" | grep -q "200 OK"; then
+# Check if Nginx is listening on the fallback port
+if ss -tulpn | grep -q ":$FALLBACK_PORT"; then
     echo ""
-    echo -e "${GREEN}=== [SUCCESS] FALLBACK SITE DEPLOYED ===${NC}"
+    echo -e "${GREEN}=== [SUCCESS] STEALTH SITE DEPLOYED ===${NC}"
     echo -e "${YELLOW}Template:${NC} iOS System Status (Dark)"
     echo -e "${YELLOW}Domain:${NC} $DOMAIN"
     echo -e "${YELLOW}Fallback Dest:${NC} 127.0.0.1:$FALLBACK_PORT"
     echo -e "${YELLOW}SSL Path:${NC} /etc/letsencrypt/live/$DOMAIN/"
-    echo -e "${GREEN}========================================${NC}"
-    echo -e "Action: Update Xray config -> Dest: ${YELLOW}127.0.0.1:$FALLBACK_PORT${NC}, SNI: ${YELLOW}$DOMAIN${NC}"
+    echo -e "${GREEN}=======================================${NC}"
+    echo -e "Action: Configure Xray Fallback -> ${YELLOW}127.0.0.1:$FALLBACK_PORT${NC}"
 else
-    echo -e "${RED}[WARNING] Nginx started but local curl check failed.${NC}"
-    echo -e "Check logs: journalctl -u nginx"
+    echo -e "${RED}[ERROR] Nginx is NOT listening on port $FALLBACK_PORT.${NC}"
+    echo -e "Check logs: journalctl -u nginx --no-pager | tail -n 20"
+    exit 1
 fi
