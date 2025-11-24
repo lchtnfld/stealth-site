@@ -145,7 +145,7 @@ cat > "$WEB_ROOT/index.html" << EOF
 EOF
 
 # Set Permissions
-chown -R www-www-data "$WEB_ROOT"
+chown -R www-data "$WEB_ROOT"
 chmod -R 755 "$WEB_ROOT"
 
 # --- 4. TEMP CONFIG FOR CERTBOT ---
