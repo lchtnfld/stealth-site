@@ -175,8 +175,10 @@ fi
 echo -e "${YELLOW}[INFO] Applying Final Nginx Configuration...${NC}"
 cat > "/etc/nginx/sites-available/$DOMAIN" <<EOF
 server {
-    # Listen on Localhost + SSL + HTTP/2
-    listen 127.0.0.1:$FALLBACK_PORT ssl http2;
+    # Listen on Localhost + SSL + HTTP/2 + PROXY Protocol
+    # "proxy_protocol" is required because Xray (Reality) sends the real client IP via this protocol.
+    listen 127.0.0.1:$FALLBACK_PORT ssl http2 proxy_protocol;
+    
     server_name $DOMAIN;
     
     root $WEB_ROOT;
