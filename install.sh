@@ -171,24 +171,41 @@ else
     exit 1
 fi
 
-# --- 6. FINAL CONFIG (OPTIMIZED) ---
+# --- 6. FINAL CONFIG (OPTIMIZED + AUTO-RENEWAL) ---
 echo -e "${YELLOW}[INFO] Applying Final Nginx Configuration...${NC}"
 cat > "/etc/nginx/sites-available/$DOMAIN" <<EOF
+# --- BLOCK 1: HTTP (port 80) used only for Let's Encrypt renewal ---
 server {
-    # Listen on Localhost + SSL + HTTP/2 + PROXY Protocol
-    # "proxy_protocol" is required because Xray (Reality) sends the real client IP via this protocol.
-    listen 127.0.0.1:$FALLBACK_PORT ssl http2 proxy_protocol;
-    
+    listen 80;
     server_name $DOMAIN;
     
+    # Allow Let's Encrypt HTTP-01 challenge on this path
+    location /.well-known/acme-challenge/ {
+        root $WEB_ROOT;
+    }
+    
+    # Return 404 for all other HTTP requests to keep the site stealthy
+    location / {
+        return 404;
+    }
+}
+
+# --- BLOCK 2: HTTPS fallback for Xray Reality (local-only) ---
+server {
+    # Listen only on localhost with SSL and PROXY protocol
+    listen 127.0.0.1:$FALLBACK_PORT ssl proxy_protocol;
+    # Enable HTTP/2 for better performance
+    http2 on;
+    
+    server_name $DOMAIN;
     root $WEB_ROOT;
     index index.html;
 
-    # Privacy: Disable Access Logs
+    # Privacy: disable access logs for this site
     access_log off;
     error_log /var/log/nginx/error.log warn;
 
-    # SSL Config (Modern & Fast)
+    # SSL configuration (certificate issued by Let's Encrypt)
     ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;
     
@@ -196,16 +213,16 @@ server {
     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
     ssl_prefer_server_ciphers off;
 
-    # SSL Cache Optimization
+    # SSL session tuning
     ssl_session_timeout 1d;
     ssl_session_cache shared:SSL:10m;
     ssl_session_tickets off;
 
-    # Proxy Protocol (For Xray)
+    # Handle PROXY protocol from Xray (required when xver = 1)
     set_real_ip_from 127.0.0.1;
     real_ip_header proxy_protocol; 
 
-    # Security Headers
+    # Basic security headers
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
